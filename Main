@@ -22,7 +22,7 @@ for (int i = 0; i < col_l; i++)
 
 myCommand = new SqlCommand("insert eregister values ('" + cod_ds + "', 'l" + (i + 1) + "', 'n', '" + cod_pr + "', " + (j + 1) + ")", Form1.myConnection);
 
-myCommand.ExecuteNonQuery();
+myCommand.ExecuteNonQuery();jk
 
 }
 
