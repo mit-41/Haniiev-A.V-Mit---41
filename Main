@@ -1,4 +1,169 @@
+    // Инфологическое проектирование.
+    // Процесс проектирования включает в себя следующие этапы:
+    // •инфологическое проектирование;
+    // •определение требований к операционной среде, в которой будет функционировать информационная система, и выбор СУБД и инструментальных программных средств;
+    // •логическое проектирование БД;
+    // •физическое проектирование БД.
+    // Основная цель процесса проектирования базы данных состоит в получении моделей БД, которые удовлетворяют следующим требованиям:
+    // •корректность схемы БД, т.е. база должна адекватно отображать моделируемую предметную область, в которой каждому объекту предметной области соответствуют данные в структуре БД, а каждому процессу — процедуры обработки данных:
+    // •обеспечение ограничений на целостность данных;
+    // •эффективность функционирования (соблюдение ограничений на время реакции системы на запрос и обновление данных);
+    // •простота и удобство эксплуатации;
+    // •гибкость, т.е. возможность развития БД и адаптации к изменениям предметной области и/или требований пользователей.
+    // Используемые классы:
+    // SqlConnection - Предоставляет открытое подключение к базе данных SQL Server.
+    // oКонструктор SqlConnection(string connectionString)
+    // SqlDataReader - Предоставляет возможность чтения потока строк только в прямом направлении из базы данных SQL Server.
+    // SqlCommand - Представляет инструкцию Transact-SQL или хранимую процедуру, выполняемую над базой данных SQL Server.
+    // oКонструктор - SqlCommand(string cmdText, SqlConnection connection)
+    // SqlParametr - Предоставляет параметр для объекта SqlCommand.
+    // oКонструктор - SqlParameter(string parameterName, SqlDbType dbType)
+    // Установка соединения с базой данных:
 
+    private void button1_Click(object sender, EventArgs e) {
+    myConnection = new SqlConnection("server=1-ПК;" + "Trusted_Connection=yes;" + "database=master;" + "connection timeout=30");
+    try {
+        myConnection.Open();
+        label1.Text = "Соединение установлено";
+        button1.Enabled = false;
+    } catch (Exception exp) {
+        label1.Text = exp.ToString();
+    }
+}
 
+// Метод SqlConnection.Open - Открывает подключение к базе данных со значениями свойств,
+// определяемыми объектом ConnectionString.
+// Загрузка данных для заполнения журнала на экране данными:
 
+private void FillTheTable1() {
+    string tab = comboBox3.Text;
+    try
+    {
+        SqlDataReader myReader = null;
+        SqlCommand myCommand = new SqlCommand("select kol_z, kol_l from discipline where name_discip='" + tab + "'", myConnection);
+        myReader = myCommand.ExecuteReader();
+        while (myReader.Read())
+        {
+            col_z = Convert.ToInt32(myReader["kol_z"]);
+            col_l = Convert.ToInt32(myReader["kol_l"]);
+        }
+        myReader.Close();
+        for (int j = 0; j < col_z; j++)
+        {
+            dataGridView1.Columns.Add("z" + (j + 1), (j + 1).ToString());
+            dataGridView1.Columns["z" + (j + 1)].Width = 50;
+        }
+        for (int j = 0; j < col_l; j++)
+        {
+            dataGridView1.Columns.Add("l" + (j + 1), "ЛР" + (j + 1));
+            dataGridView1.Columns["l" + (j + 1)].Width = 50;
+        }
+        myReader = null;
+        myCommand = new SqlCommand("select name_discip, cod_z, mark, name_prepod, name " + "from eregister " + "join discipline on name_ds=discipline.cod join teachers on name_pr=teachers.cod join students on name_st=students.nomer " + "where name_discip='" + tab + "'", myConnection);
+        myReader = myCommand.ExecuteReader();
 
+        int i = 0;
+        int k = 0;
+        bool fl = true;
+
+        while (myReader.Read())  {
+            int p = myReader.Depth;
+            if (fl)
+            {
+                dataGridView1.Rows.Add();
+                dataGridView1.Rows[i].HeaderCell.Value = (i + 1).ToString();
+                dataGridView1[0, i].Value = myReader["name"].ToString();
+                dataGridView1[1, i].Value = myReader["name_discip"].ToString();
+                dataGridView1[2, i].Value = myReader["name_prepod"].ToString();
+                k = 3;
+                fl = false;
+            }
+            if (k - 3 < col_z)
+                if (myReader["mark"].ToString() == "1") {
+                    dataGridView1[k, i].Value = "+";
+                    dataGridView1[k, i].Style.BackColor =
+                        System.Drawing.Color.LightGreen;
+                }
+                else if (myReader["mark"].ToString() == "0")
+                    dataGridView1[k, i].Value = "-";
+            if (k - 3 >= col_z && k - 3 - col_z < col_l)
+                if (myReader["mark"].ToString() != "n")
+                    dataGridView1[k, i].Value = myReader["mark"].ToString();
+            k++;
+            if (k == 3 + col_z + col_l)
+            {
+                i++;
+                fl = true;
+            }
+        }
+
+        myReader.Close();
+    }
+    catch (Exception exp)
+    {
+
+        label2.Text = exp.ToString();
+    }
+}
+
+//  Метод SqlDataReader.Read - Перемещает SqlDataReader к следующей записи.
+//  Метод SqlDataReader.Close -
+//  Закрывает объект SqlDataReader.
+//  Формирование таблицы задолженностей по лабораторным работам :
+
+private void FillTheTable_Labs() {
+    string tab = comboBox3.Text;
+    int col = 0;
+    SqlDataReader myReader = null;
+    SqlCommand myCommand = new SqlCommand("select kol_l from discipline where name_discip='" + tab + "'", myConnection);
+    myReader = myCommand.ExecuteReader();
+    while (myReader.Read())
+    {
+        col = Convert.ToInt32(myReader["kol_l"]);
+    }
+    myReader.Close();
+    string zadlist = string.Empty;
+
+    for (int i = 0; i < col; i++)
+        zadlist += "'l" + (i + 1) + "',";
+    int index = zadlist.LastIndexOf(',');
+    zadlist = zadlist.Remove(index);
+    bool fl = true;
+    int k = 0;
+
+    try
+    {
+        myReader = null;
+        myCommand = new SqlCommand("select mark, name from eregister join discipline on name_ds=discipline.cod join students on name_st=students.nomer " + "where name_discip='" + tab + "' and cod_z in (" + zadlist + ")", myConnection);
+        myReader = myCommand.ExecuteReader();
+        int i = 0;
+        while (myReader.Read())
+        {
+            if (fl)
+            {
+                if (!dobavleno_table4)
+                    dataGridView4.Rows.Add();
+                dataGridView4.Rows[i].HeaderCell.Value = (i + 1).ToString();
+                dataGridView4[0, i].Value = myReader["name"].ToString();
+                k = 0;
+                fl = false;
+            }
+            if (myReader["mark"].ToString() == "n")
+                dataGridView4[k + 1, i].Value = false;
+            else
+                dataGridView4[k + 1, i].Value = true;
+            k++;
+            if (k == col)
+            {
+                i++;
+                fl = true;
+            }
+        }
+
+        myReader.Close();
+    }
+    catch (Exception exp)
+    {
+        label2.Text = exp.ToString();
+    }
+}
